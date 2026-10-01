@@ -1,0 +1,2641 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0b141a">
+<title>AmPrem Bot</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+
+:root{
+  --bg:#0b141a;
+  --header:#1f2c33;
+  --chat-bg:#0b141a;
+  --bot-bubble:#1f2c33;
+  --user-bubble:#005c4b;
+  --border:rgba(255,255,255,0.08);
+  --text:#e9edef;
+  --text-dim:#8696a0;
+  --text-mute:#667781;
+  --accent:#00a884;
+  --accent-2:#00d4a4;
+  --success:#22c55e;
+  --warning:#f59e0b;
+  --danger:#ef4444;
+  --gold:#fbbf24;
+  --link:#53bdeb;
+}
+
+html,body{height:100%;overflow:hidden}
+
+body{
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  font-size:15px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  position:fixed;
+  inset:0;
+}
+
+body::before{
+  content:'';
+  position:fixed;
+  inset:0;
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(0,168,132,0.05), transparent 40%),
+    radial-gradient(circle at 80% 70%, rgba(0,168,132,0.05), transparent 40%);
+  opacity:0.6;
+  z-index:0;
+  pointer-events:none;
+}
+
+.app{
+  position:relative;
+  z-index:1;
+  display:flex;
+  flex-direction:column;
+  height:100vh;
+  height:100dvh;
+  max-width:520px;
+  margin:0 auto;
+  background:var(--chat-bg);
+}
+.header{
+  background:var(--header);
+  border-bottom:1px solid var(--border);
+  padding:12px 16px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  flex-shrink:0;
+  box-shadow:0 2px 8px rgba(0,0,0,0.3);
+}
+
+.bot-avatar{
+  width:40px;
+  height:40px;
+  border-radius:50%;
+  background:linear-gradient(135deg, #00a884, #00d4a4);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:20px;
+  flex-shrink:0;
+  position:relative;
+  box-shadow:0 4px 12px rgba(0,168,132,0.4);
+}
+
+.bot-avatar::after{
+  content:'';
+  position:absolute;
+  bottom:0;
+  right:0;
+  width:12px;
+  height:12px;
+  border-radius:50%;
+  background:var(--success);
+  border:2px solid var(--header);
+  box-shadow:0 0 8px var(--success);
+}
+
+.bot-info{flex:1;min-width:0}
+
+.bot-name{
+  font-size:15px;
+  font-weight:700;
+  letter-spacing:-0.2px;
+  margin-bottom:2px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+
+.verified{
+  width:14px;
+  height:14px;
+  border-radius:50%;
+  background:var(--link);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  color:#fff;
+  font-size:9px;
+  font-weight:700;
+}
+
+.bot-status{
+  font-size:12px;
+  color:var(--text-dim);
+  display:flex;
+  align-items:center;
+  gap:4px;
+}
+
+.bot-status.online{color:var(--accent-2)}
+
+.header-actions{display:flex;gap:6px}
+
+.icon-btn{
+  width:38px;
+  height:38px;
+  border-radius:50%;
+  background:transparent;
+  border:none;
+  color:var(--text-dim);
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:18px;
+  transition:background .2s;
+}
+
+.icon-btn:hover{background:rgba(255,255,255,0.05)}
+.icon-btn:active{transform:scale(0.9)}
+
+.chat{
+  flex:1;
+  overflow-y:auto;
+  padding:16px 12px 12px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  scroll-behavior:smooth;
+}
+
+.chat::-webkit-scrollbar{width:4px}
+.chat::-webkit-scrollbar-track{background:transparent}
+.chat::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:2px}
+.msg{
+  max-width:82%;
+  padding:8px 12px 6px;
+  border-radius:12px;
+  font-size:14px;
+  line-height:1.5;
+  word-wrap:break-word;
+  word-break:break-word;
+  position:relative;
+  animation:msgIn 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  box-shadow:0 1px 2px rgba(0,0,0,0.2);
+}
+
+@keyframes msgIn{
+  from{opacity:0;transform:translateY(10px) scale(0.95)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+
+.msg.bot{
+  align-self:flex-start;
+  background:var(--bot-bubble);
+  color:var(--text);
+  border-top-left-radius:4px;
+}
+
+.msg.user{
+  align-self:flex-end;
+  background:var(--user-bubble);
+  color:var(--text);
+  border-top-right-radius:4px;
+}
+
+.msg-time{
+  font-size:10.5px;
+  color:var(--text-mute);
+  text-align:right;
+  margin-top:4px;
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:3px;
+  font-weight:500;
+}
+
+.msg.bot .msg-time{color:var(--text-mute)}
+.msg.user .msg-time{color:rgba(255,255,255,0.6)}
+
+.read-mark{color:var(--link);font-size:12px;line-height:1}
+
+.msg-title{
+  font-weight:700;
+  font-size:14.5px;
+  margin-bottom:4px;
+  color:var(--accent-2);
+}
+
+.msg-divider{
+  height:1px;
+  background:rgba(255,255,255,0.08);
+  margin:8px -12px;
+}
+
+.msg-row{
+  display:flex;
+  justify-content:space-between;
+  padding:3px 0;
+  gap:12px;
+  font-size:13px;
+}
+
+.msg-row-label{color:var(--text-dim);flex-shrink:0}
+
+.msg-row-value{
+  color:var(--text);
+  font-weight:600;
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px;
+  text-align:right;
+  word-break:break-all;
+}
+
+.msg-btn{
+  display:inline-block;
+  background:rgba(0,168,132,0.15);
+  color:var(--accent-2);
+  border:1px solid rgba(0,168,132,0.3);
+  padding:6px 12px;
+  border-radius:8px;
+  font-size:12px;
+  font-weight:600;
+  cursor:pointer;
+  margin:4px 4px 0 0;
+  transition:all .2s;
+}
+
+.msg-btn:hover{background:rgba(0,168,132,0.25)}
+
+.msg-ok{
+  background:rgba(34,197,94,0.1);
+  border:1px solid rgba(34,197,94,0.3);
+  border-radius:8px;
+  padding:8px 12px;
+  color:#6ee7a4;
+  font-size:13px;
+  margin-top:6px;
+}
+
+.msg-err{
+  background:rgba(239,68,68,0.1);
+  border:1px solid rgba(239,68,68,0.3);
+  border-radius:8px;
+  padding:8px 12px;
+  color:#fca5a5;
+  font-size:13px;
+  margin-top:6px;
+}
+
+.msg-progress{
+  margin-top:8px;
+  height:4px;
+  background:rgba(255,255,255,0.08);
+  border-radius:2px;
+  overflow:hidden;
+}
+
+.msg-progress-fill{
+  height:100%;
+  background:linear-gradient(90deg, #00a884, #00d4a4);
+  border-radius:2px;
+  transition:width .4s;
+}
+
+.typing{
+  display:flex;
+  gap:4px;
+  padding:12px 14px;
+}
+
+.typing-dot{
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:var(--text-dim);
+  animation:typingBounce 1.4s ease-in-out infinite;
+}
+
+.typing-dot:nth-child(2){animation-delay:0.2s}
+.typing-dot:nth-child(3){animation-delay:0.4s}
+
+@keyframes typingBounce{
+  0%, 60%, 100%{transform:translateY(0);opacity:0.5}
+  30%{transform:translateY(-6px);opacity:1}
+}
+
+.date-divider{
+  align-self:center;
+  background:rgba(31,44,51,0.9);
+  padding:5px 12px;
+  border-radius:8px;
+  font-size:11.5px;
+  color:var(--text-dim);
+  margin:12px 0 4px;
+  font-weight:600;
+  box-shadow:0 1px 2px rgba(0,0,0,0.2);
+}
+
+/* CONSOLE BUBBLE */
+.console{
+  background:#0a0e13;
+  border:1px solid #1a3a2a;
+  border-radius:10px;
+  padding:10px 12px;
+  font-family:'JetBrains Mono',Consolas,monospace;
+  font-size:11px;
+  line-height:1.7;
+  color:#00ff88;
+  margin-top:8px;
+  white-space:pre-wrap;
+  word-break:break-all;
+  text-align:left;
+  max-height:280px;
+  overflow-y:auto;
+  overflow-x:hidden;
+}
+
+.console::-webkit-scrollbar{width:4px}
+.console::-webkit-scrollbar-thumb{background:#1a3a2a;border-radius:2px}
+
+.console .c-line{
+  display:block;
+  margin:0;
+  padding:0;
+}
+
+.console .c-req{color:#00d4ff}
+.console .c-ok{color:#00ff88}
+.console .c-err{color:#ff5577}
+.console .c-warn{color:#fbbf24}
+.console .c-info{color:#8899aa}
+.console .c-key{color:#c4b5fd}
+.console .c-sep{
+  display:block;
+  border-top:1px dashed #1a3a2a;
+  margin:6px 0;
+}
+.quick-bar{
+  padding:8px 12px;
+  background:var(--header);
+  border-top:1px solid var(--border);
+  display:flex;
+  gap:6px;
+  overflow-x:auto;
+  scrollbar-width:none;
+  flex-shrink:0;
+}
+
+.quick-bar::-webkit-scrollbar{display:none}
+
+.quick-btn{
+  flex-shrink:0;
+  background:rgba(0,168,132,0.1);
+  border:1px solid rgba(0,168,132,0.25);
+  color:var(--accent-2);
+  padding:7px 14px;
+  border-radius:20px;
+  font-size:12.5px;
+  font-weight:600;
+  cursor:pointer;
+  transition:all .15s;
+  white-space:nowrap;
+  font-family:inherit;
+}
+
+.quick-btn:hover{background:rgba(0,168,132,0.2)}
+.quick-btn:active{transform:scale(0.95)}
+
+.input-bar{
+  background:var(--header);
+  border-top:1px solid var(--border);
+  padding:8px 10px;
+  display:flex;
+  align-items:flex-end;
+  gap:8px;
+  flex-shrink:0;
+  padding-bottom:max(8px, env(safe-area-inset-bottom));
+}
+
+.input-wrap{
+  flex:1;
+  background:#2a3942;
+  border-radius:22px;
+  padding:6px 6px 6px 16px;
+  display:flex;
+  align-items:flex-end;
+  gap:8px;
+  min-height:42px;
+}
+
+.input-field{
+  flex:1;
+  background:transparent;
+  border:none;
+  color:var(--text);
+  font-family:inherit;
+  font-size:15px;
+  outline:none;
+  resize:none;
+  max-height:120px;
+  padding:8px 0;
+  line-height:1.4;
+  font-weight:500;
+}
+
+.input-field::placeholder{color:var(--text-mute)}
+
+.send-btn{
+  width:36px;
+  height:36px;
+  border-radius:50%;
+  background:var(--accent);
+  border:none;
+  color:#fff;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:16px;
+  flex-shrink:0;
+  transition:all .15s;
+  box-shadow:0 2px 8px rgba(0,168,132,0.3);
+}
+
+.send-btn:hover{background:var(--accent-2);transform:scale(1.05)}
+.send-btn:active{transform:scale(0.9)}
+.send-btn:disabled{opacity:0.5;cursor:not-allowed;transform:none}
+.loading{
+  position:fixed;
+  inset:0;
+  background:var(--bg);
+  z-index:9999;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  transition:opacity .4s, visibility .4s;
+}
+
+.loading.hide{opacity:0;visibility:hidden;pointer-events:none}
+
+.load-logo{
+  width:80px;
+  height:80px;
+  border-radius:50%;
+  background:linear-gradient(135deg, #00a884, #00d4a4);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:36px;
+  margin-bottom:20px;
+  position:relative;
+  box-shadow:0 12px 48px rgba(0,168,132,0.4);
+  animation:loadPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes loadPulse{
+  0%,100%{transform:scale(1);box-shadow:0 12px 48px rgba(0,168,132,0.4)}
+  50%{transform:scale(1.05);box-shadow:0 16px 60px rgba(0,212,164,0.6)}
+}
+
+.load-title{
+  font-size:20px;
+  font-weight:800;
+  letter-spacing:-0.3px;
+  margin-bottom:6px;
+}
+
+.load-sub{
+  font-size:13px;
+  color:var(--text-dim);
+  margin-bottom:24px;
+}
+
+.load-dots{display:flex;gap:6px}
+
+.load-dots span{
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:var(--accent);
+  animation:dotBounce 1.4s ease-in-out infinite;
+}
+
+.load-dots span:nth-child(2){animation-delay:0.2s}
+.load-dots span:nth-child(3){animation-delay:0.4s}
+
+@keyframes dotBounce{
+  0%, 60%, 100%{transform:translateY(0);opacity:0.4}
+  30%{transform:translateY(-8px);opacity:1}
+}
+
+.modal{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.8);
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+  z-index:100;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+}
+
+.modal.show{display:flex;animation:fadeIn 0.3s}
+
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+.modal-box{
+  background:var(--header);
+  border:1px solid var(--border);
+  border-radius:18px;
+  padding:28px 22px;
+  max-width:340px;
+  width:100%;
+  text-align:center;
+  animation:popIn 0.4s cubic-bezier(0.34,1.56,0.64,1);
+}
+
+@keyframes popIn{
+  from{transform:scale(0.85);opacity:0}
+  to{transform:scale(1);opacity:1}
+}
+
+.modal-icon{
+  font-size:48px;
+  margin-bottom:12px;
+  filter:drop-shadow(0 0 20px rgba(245,158,11,0.5));
+}
+
+.modal-title{
+  font-size:18px;
+  font-weight:800;
+  margin-bottom:8px;
+}
+
+.modal-desc{
+  font-size:13px;
+  color:var(--text-dim);
+  line-height:1.6;
+  margin-bottom:20px;
+}
+
+.modal-btn{
+  width:100%;
+  padding:12px;
+  background:var(--accent);
+  border:none;
+  border-radius:12px;
+  color:#fff;
+  font-family:inherit;
+  font-size:14px;
+  font-weight:700;
+  cursor:pointer;
+  transition:all .15s;
+}
+
+.modal-btn:hover{background:var(--accent-2)}
+.modal-btn:active{transform:scale(0.97)}
+
+.toast{
+  position:fixed;
+  top:80px;
+  left:50%;
+  transform:translateX(-50%) translateY(-100px);
+  background:var(--header);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:11px 18px;
+  font-size:13px;
+  font-weight:600;
+  color:var(--text);
+  box-shadow:0 12px 32px rgba(0,0,0,0.5);
+  z-index:200;
+  transition:transform .3s cubic-bezier(0.34,1.56,0.64,1);
+  max-width:90%;
+  text-align:center;
+}
+
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast.ok{border-color:var(--success)}
+.toast.err{border-color:var(--danger)}
+
+.splash-premium{
+  position:fixed;
+  inset:0;
+  background:rgba(5,6,10,0.95);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:300;
+  padding:20px;
+}
+
+.splash-premium.show{display:flex;animation:fadeIn 0.3s}
+
+.premium-box{
+  background:linear-gradient(135deg, rgba(30,26,20,0.98), rgba(22,18,15,0.98));
+  border:1.5px solid rgba(251,191,36,0.4);
+  border-radius:24px;
+  padding:32px 24px;
+  max-width:340px;
+  width:100%;
+  text-align:center;
+  animation:popIn 0.5s cubic-bezier(0.34,1.56,0.64,1);
+  box-shadow:0 30px 80px rgba(0,0,0,0.7), 0 0 60px rgba(251,191,36,0.2);
+  position:relative;
+  overflow:hidden;
+}
+
+.premium-box::before{
+  content:'';
+  position:absolute;
+  top:-50%;left:-50%;
+  width:200%;height:200%;
+  background:conic-gradient(from 0deg, transparent 0deg, rgba(251,191,36,0.3) 90deg, transparent 180deg, rgba(168,85,247,0.3) 270deg, transparent 360deg);
+  animation:rotate 5s linear infinite;
+  z-index:0;
+}
+
+@keyframes rotate{to{transform:rotate(360deg)}}
+
+.premium-inner{
+  position:relative;
+  z-index:1;
+  background:linear-gradient(135deg, #1a1525, #0d0a15);
+  border-radius:20px;
+  padding:24px 18px;
+}
+
+.premium-crown{
+  font-size:64px;
+  margin-bottom:12px;
+  display:inline-block;
+  animation:crownBounce 1.2s ease-in-out infinite;
+  filter:drop-shadow(0 0 24px rgba(251,191,36,0.9));
+}
+
+@keyframes crownBounce{
+  0%,100%{transform:translateY(0) rotate(-8deg) scale(1)}
+  50%{transform:translateY(-10px) rotate(8deg) scale(1.08)}
+}
+
+.premium-title{
+  font-size:32px;
+  font-weight:800;
+  letter-spacing:-1px;
+  background:linear-gradient(135deg, #fbbf24, #f59e0b, #ef4444);
+  background-size:200% 100%;
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+  animation:flow 2s linear infinite;
+  filter:drop-shadow(0 0 20px rgba(251,191,36,0.5));
+  margin-bottom:6px;
+  line-height:1.1;
+}
+
+@keyframes flow{
+  0%{background-position:0% 50%}
+  100%{background-position:200% 50%}
+}
+
+.premium-sub{
+  font-size:12.5px;
+  color:var(--text-dim);
+  margin-bottom:20px;
+}
+
+.premium-btn{
+  width:100%;
+  padding:13px;
+  background:linear-gradient(135deg, #00a884, #00d4a4);
+  border:none;
+  border-radius:12px;
+  color:#fff;
+  font-family:inherit;
+  font-size:14px;
+  font-weight:700;
+  cursor:pointer;
+  transition:all .15s;
+  box-shadow:0 8px 24px rgba(0,168,132,0.4);
+}
+
+.premium-btn:hover{box-shadow:0 12px 32px rgba(0,168,132,0.6)}
+.premium-btn:active{transform:scale(0.97)}
+
+/* ============ MAINT_OVERLAY ============ */
+@keyframes mo_pulse{
+  0%,100%{text-shadow:0 0 6px #ff3860,0 0 12px #ff3860}
+  50%{text-shadow:0 0 10px #ff3860,0 0 20px #ff3860,0 0 30px rgba(255,56,96,0.6)}
+}
+@keyframes mo_spin{
+  0%{transform:rotate(0deg)}
+  100%{transform:rotate(360deg)}
+}
+@keyframes mo_scan{
+  0%{transform:translateX(-100%)}
+  100%{transform:translateX(100%)}
+}
+@keyframes mo_blink{
+  0%,100%{opacity:1}
+  50%{opacity:0.4}
+}
+
+.maint-overlay{
+  display:none;
+  position:fixed;
+  inset:0;
+  z-index:99998;
+  background:radial-gradient(ellipse at center, rgba(255,56,96,0.15), #000 70%);
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:30px 24px;
+  text-align:center;
+  font-family:'JetBrains Mono', monospace;
+  overflow:hidden;
+}
+
+.maint-overlay.show{display:flex}
+
+.maint-overlay::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  background-image:
+    linear-gradient(rgba(255,56,96,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,56,96,0.05) 1px, transparent 1px);
+  background-size:30px 30px;
+  pointer-events:none;
+}
+
+.maint-icon{
+  font-size:72px;
+  margin-bottom:20px;
+  animation:mo_spin 6s linear infinite;
+  filter:drop-shadow(0 0 20px #ff3860);
+  position:relative;
+  z-index:2;
+}
+
+.maint-title{
+  font-size:26px;
+  font-weight:900;
+  letter-spacing:6px;
+  color:#ff3860;
+  text-transform:uppercase;
+  margin-bottom:12px;
+  animation:mo_pulse 1.5s ease-in-out infinite;
+  position:relative;
+  z-index:2;
+}
+
+.maint-sub{
+  font-size:11px;
+  letter-spacing:5px;
+  color:#ff8fa8;
+  text-transform:uppercase;
+  margin-bottom:24px;
+  position:relative;
+  z-index:2;
+  opacity:0.8;
+}
+
+.maint-box{
+  background:rgba(0,0,0,0.6);
+  border:1px solid rgba(255,56,96,0.4);
+  border-radius:12px;
+  padding:18px 22px;
+  max-width:340px;
+  width:100%;
+  text-align:left;
+  position:relative;
+  z-index:2;
+  box-shadow:
+    0 0 30px rgba(255,56,96,0.3),
+    inset 0 0 20px rgba(255,56,96,0.05);
+}
+
+.maint-box::before{
+  content:'';
+  position:absolute;
+  top:0;left:0;right:0;
+  height:1px;
+  background:linear-gradient(90deg, transparent, #ff3860, transparent);
+  animation:mo_scan 3s linear infinite;
+}
+
+.maint-row{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  padding:6px 0;
+  font-size:12px;
+  color:#ccc;
+}
+
+.maint-row + .maint-row{
+  border-top:1px dashed rgba(255,56,96,0.2);
+}
+
+.maint-label{
+  color:#888;
+  min-width:60px;
+  flex-shrink:0;
+}
+
+.maint-value{
+  color:#ff8fa8;
+  word-break:break-word;
+}
+
+.maint-status{
+  color:#ff3860;
+  font-weight:700;
+  animation:mo_blink 1.2s ease-in-out infinite;
+}
+
+.maint-hint{
+  margin-top:24px;
+  font-size:11px;
+  color:#555;
+  letter-spacing:2px;
+  position:relative;
+  z-index:2;
+}
+
+.maint-hint::before{content:'// '}
+.maint-hint::after{content:' //'}
+
+
+/* ============ MAINT RETRY BUTTON ============ */
+.maint-retry{
+  margin-top:16px;
+  padding:12px 28px;
+  background:transparent;
+  border:2px solid #ff3860;
+  color:#ff3860;
+  font-family:'JetBrains Mono', monospace;
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  border-radius:8px;
+  cursor:pointer;
+  transition:all .2s;
+  box-shadow:0 0 15px rgba(255,56,96,0.3);
+  position:relative;
+  z-index:2;
+}
+
+.maint-retry:hover,
+.maint-retry:active{
+  background:#ff3860;
+  color:#000;
+  box-shadow:0 0 30px rgba(255,56,96,0.6);
+}
+
+
+/* ============ GAGAH_BOT_TEXT_V1 ============ */
+@keyframes gb_glow{
+  0%,100%{text-shadow:0 0 4px currentColor,0 0 8px currentColor}
+  50%{text-shadow:0 0 6px currentColor,0 0 14px currentColor,0 0 24px currentColor}
+}
+@keyframes gb_pulse{
+  0%,100%{transform:scale(1)}
+  50%{transform:scale(1.02)}
+}
+@keyframes gb_shine{
+  0%{background-position:-200% 50%}
+  100%{background-position:200% 50%}
+}
+@keyframes gb_fadeIn{
+  from{opacity:0;transform:translateY(5px)}
+  to{opacity:1;transform:translateY(0)}
+}
+@keyframes gb_blink{
+  0%,100%{opacity:1}
+  50%{opacity:0.4}
+}
+
+/* Welcome banner khusus */
+.gb-banner{
+  text-align:center;
+  margin:6px 0;
+}
+
+.gb-banner-title{
+  font-size:16px;
+  font-weight:900;
+  letter-spacing:3px;
+  color:#00d4a4;
+  text-shadow:
+    0 0 6px #00d4a4,
+    0 0 12px #00d4a4,
+    0 0 24px rgba(0,212,164,0.6);
+  animation:gb_glow 2s ease-in-out infinite;
+  text-transform:uppercase;
+  margin:4px 0;
+}
+
+.gb-banner-line{
+  height:1px;
+  margin:8px 0;
+  background:linear-gradient(90deg, transparent, #00d4a4, #00a884, #00d4a4, transparent);
+  box-shadow:0 0 8px #00d4a4;
+}
+
+.gb-box{
+  background:rgba(0,20,15,0.4);
+  border:1px solid rgba(0,212,164,0.3);
+  border-radius:8px;
+  padding:8px 10px;
+  margin:6px 0;
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;
+  line-height:1.7;
+  box-shadow:
+    inset 0 0 20px rgba(0,212,164,0.05),
+    0 0 12px rgba(0,212,164,0.15);
+  position:relative;
+}
+
+.gb-box::before{
+  content:'';
+  position:absolute;
+  top:0;left:0;right:0;
+  height:1px;
+  background:linear-gradient(90deg, transparent, #00d4a4, transparent);
+  opacity:0.6;
+}
+
+.gb-row{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  padding:2px 0;
+  align-items:flex-start;
+}
+
+.gb-row + .gb-row{
+  border-top:1px dashed rgba(0,212,164,0.15);
+}
+
+.gb-label{
+  color:#8899aa;
+  flex-shrink:0;
+  font-weight:500;
+}
+
+.gb-value{
+  color:#00d4a4;
+  font-weight:700;
+  text-align:right;
+  word-break:break-all;
+}
+
+.gb-value.green{color:#00ff88;text-shadow:0 0 6px #00ff88}
+.gb-value.yellow{color:#ffd700;text-shadow:0 0 6px #ffd700}
+.gb-value.cyan{color:#00f0ff;text-shadow:0 0 6px #00f0ff}
+.gb-value.pink{color:#ff4da6;text-shadow:0 0 6px #ff4da6}
+.gb-value.purple{color:#b57aff;text-shadow:0 0 6px #b57aff}
+
+/* Section header */
+.gb-section{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin:10px 0 4px;
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:1.5px;
+  color:#00d4a4;
+  text-transform:uppercase;
+  text-shadow:0 0 6px #00d4a4;
+}
+
+.gb-section::before{
+  content:'▸';
+  color:#00ff88;
+  font-size:14px;
+}
+
+.gb-section::after{
+  content:'';
+  flex:1;
+  height:1px;
+  background:linear-gradient(90deg, #00d4a4, transparent);
+  box-shadow:0 0 6px #00d4a4;
+}
+
+/* Menu items */
+.gb-menu{
+  display:flex;
+  gap:6px;
+  padding:4px 0;
+  font-size:11.5px;
+  border-bottom:1px dashed rgba(0,212,164,0.15);
+}
+
+.gb-menu-cmd{
+  color:#00d4a4;
+  font-weight:700;
+  font-family:'JetBrains Mono',monospace;
+  min-width:85px;
+  flex-shrink:0;
+}
+
+.gb-menu-desc{
+  color:#c0c8d8;
+}
+
+/* Big number stats */
+.gb-stat-big{
+  font-size:18px;
+  font-weight:900;
+  letter-spacing:1px;
+  color:#00d4a4;
+  text-shadow:
+    0 0 6px #00d4a4,
+    0 0 12px #00d4a4,
+    0 0 24px rgba(0,212,164,0.5);
+}
+
+/* Enhanced OK/ERR */
+.msg-ok{
+  background:linear-gradient(135deg, rgba(0,255,136,0.08), rgba(0,212,164,0.08)) !important;
+  border:1px solid #00ff88 !important;
+  box-shadow:
+    0 0 12px rgba(0,255,136,0.3),
+    inset 0 0 15px rgba(0,255,136,0.05) !important;
+  color:#6ee7a4 !important;
+  font-weight:700 !important;
+  letter-spacing:0.3px;
+}
+
+.msg-ok::before{
+  content:'✓ ';
+  color:#00ff88;
+  font-weight:900;
+  text-shadow:0 0 8px #00ff88;
+}
+
+.msg-err{
+  background:linear-gradient(135deg, rgba(255,56,96,0.08), rgba(255,0,80,0.08)) !important;
+  border:1px solid #ff3860 !important;
+  box-shadow:
+    0 0 12px rgba(255,56,96,0.3),
+    inset 0 0 15px rgba(255,56,96,0.05) !important;
+  color:#ff8fa8 !important;
+  font-weight:700 !important;
+}
+
+.msg-err::before{
+  content:'✗ ';
+  color:#ff3860;
+  font-weight:900;
+  text-shadow:0 0 8px #ff3860;
+}
+
+/* Bot title glow */
+.msg-title{
+  color:#00d4a4 !important;
+  text-shadow:0 0 6px #00d4a4;
+  font-weight:800 !important;
+  letter-spacing:0.5px;
+  font-size:13px !important;
+  border-bottom:1px solid rgba(0,212,164,0.2);
+  padding-bottom:4px;
+  margin-bottom:6px;
+}
+
+.msg-title::before{
+  content:'▸ ';
+  color:#00ff88;
+  text-shadow:0 0 8px #00ff88;
+}
+
+/* Bubbles enhancement */
+.msg.bot{
+  border:1px solid rgba(0,212,164,0.12) !important;
+  box-shadow:
+    0 0 12px rgba(0,212,164,0.08),
+    inset 0 1px 0 rgba(255,255,255,0.03) !important;
+}
+
+.msg.user{
+  box-shadow:
+    0 0 15px rgba(0,168,132,0.25),
+    inset 0 1px 0 rgba(255,255,255,0.05) !important;
+}
+
+/* Loading dots more glowing */
+.typing-dot{
+  box-shadow:0 0 8px #00d4a4 !important;
+}
+
+/* Quick button glow */
+.quick-btn{
+  text-shadow:0 0 4px rgba(0,212,164,0.5);
+  box-shadow:
+    0 0 8px rgba(0,212,164,0.15),
+    inset 0 0 8px rgba(0,212,164,0.05);
+}
+
+.quick-btn:active{
+  box-shadow:
+    0 0 15px rgba(0,212,164,0.4),
+    inset 0 0 12px rgba(0,212,164,0.15);
+}
+
+/* Header glow */
+.header{
+  box-shadow:
+    0 2px 12px rgba(0,0,0,0.5),
+    0 0 20px rgba(0,212,164,0.08) !important;
+  border-bottom:1px solid rgba(0,212,164,0.15) !important;
+}
+
+.bot-avatar{
+  box-shadow:
+    0 0 15px rgba(0,212,164,0.5),
+    0 0 30px rgba(0,212,164,0.3),
+    inset 0 0 10px rgba(255,255,255,0.1) !important;
+  animation:gb_pulse 2s ease-in-out infinite;
+}
+
+/* Welcome hero */
+.gb-hero{
+  text-align:center;
+  padding:14px 10px;
+  margin:6px 0;
+  background:linear-gradient(135deg, rgba(0,168,132,0.08), rgba(0,212,164,0.05));
+  border:1px solid rgba(0,212,164,0.2);
+  border-radius:10px;
+  position:relative;
+  overflow:hidden;
+}
+
+.gb-hero::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  background:linear-gradient(90deg, transparent, rgba(0,212,164,0.15), transparent);
+  animation:gb_shine 4s linear infinite;
+}
+
+.gb-hero-emoji{
+  font-size:36px;
+  margin-bottom:6px;
+  filter:drop-shadow(0 0 12px #00d4a4);
+  animation:gb_pulse 2s ease-in-out infinite;
+}
+
+.gb-hero-title{
+  font-size:15px;
+  font-weight:900;
+  letter-spacing:2px;
+  color:#00d4a4;
+  text-transform:uppercase;
+  text-shadow:
+    0 0 6px #00d4a4,
+    0 0 12px #00d4a4,
+    0 0 24px rgba(0,212,164,0.6);
+  margin-bottom:4px;
+  position:relative;
+  z-index:1;
+}
+
+.gb-hero-sub{
+  font-size:10.5px;
+  color:#8899aa;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  position:relative;
+  z-index:1;
+}
+
+/* Premium box enhance */
+.premium-title{
+  animation:gb_glow 1.8s ease-in-out infinite !important;
+}
+
+.premium-crown{
+  filter:
+    drop-shadow(0 0 20px #fbbf24)
+    drop-shadow(0 0 40px #fbbf24)
+    drop-shadow(0 0 60px rgba(251,191,36,0.5)) !important;
+}
+
+</style>
+</head>
+<body>
+
+<div class="maint-overlay" id="maintOverlay">
+  <div class="maint-icon">🔧</div>
+  <div class="maint-title">MAINTENANCE</div>
+  <div class="maint-sub">◈ Server Under Repair ◈</div>
+
+  <div class="maint-box">
+    <div class="maint-row">
+      <span class="maint-label">Status</span>
+      <span class="maint-value maint-status">● SERVER OFFLINE</span>
+    </div>
+    <div class="maint-row">
+      <span class="maint-label">Pesan</span>
+      <span class="maint-value" id="maintMsg">Server sedang diperbaiki</span>
+    </div>
+    <div class="maint-row">
+      <span class="maint-label">ETA</span>
+      <span class="maint-value" id="maintEta">-</span>
+    </div>
+    <div class="maint-row">
+      <span class="maint-label">Update</span>
+      <span class="maint-value" id="maintUpdate">-</span>
+    </div>
+  </div>
+
+  <div class="maint-hint">silahkan coba lagi nanti</div>
+  <button class="maint-retry" id="maintRetryBtn" onclick="retryMaint()">🔄 COBA LAGI</button>
+</div>
+
+
+
+<div class="loading" id="loadingScreen">
+    <div class="load-logo">🤖</div>
+    <div class="load-title">AmPrem Bot</div>
+    <div class="load-sub">Menghubungkan...</div>
+    <div class="load-dots">
+        <span></span><span></span><span></span>
+    </div>
+</div>
+
+<div class="app">
+
+    <div class="header">
+        <div class="bot-avatar">🤖</div>
+        <div class="bot-info">
+            <div class="bot-name">
+                AmPrem Bot
+                <span class="verified">✓</span>
+            </div>
+            <div class="bot-status online" id="botStatus">online</div>
+        </div>
+        <div class="header-actions">
+            <button class="icon-btn" onclick="showHelp()" title="Bantuan">?</button>
+            <button class="icon-btn" onclick="doLogout()" title="Logout" id="logoutBtn" style="display:none">⏻</button>
+        </div>
+    </div>
+
+    <div class="chat" id="chatArea"></div>
+
+    <div class="quick-bar" id="quickBar"></div>
+
+    <div class="input-bar">
+        <div class="input-wrap">
+            <input
+                type="text"
+                class="input-field"
+                id="inputField"
+                placeholder="Ketik pesan..."
+                autocomplete="off"
+                spellcheck="false"
+                autocapitalize="off"
+            >
+            <button class="send-btn" id="sendBtn" onclick="sendMessage()">➤</button>
+        </div>
+    </div>
+
+</div>
+
+<div class="modal" id="limitModal">
+    <div class="modal-box">
+        <div class="modal-icon">⏳</div>
+        <div class="modal-title">Limit Harian Tercapai</div>
+        <div class="modal-desc">
+            Kamu sudah mencapai batas <b>10 aksi</b> hari ini.<br>
+            Coba lagi besok ya.
+        </div>
+        <button class="modal-btn" onclick="closeLimitModal()">Mengerti</button>
+    </div>
+</div>
+
+<div class="splash-premium" id="premiumPopup">
+    <div class="premium-box">
+        <div class="premium-inner">
+            <div class="premium-crown">👑</div>
+            <div class="premium-title">PREMIUM BOY</div>
+            <div class="premium-sub">Kamu berhasil masuk ke sistem premium</div>
+            <button class="premium-btn" onclick="closePremium()">Mulai Chat →</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ==========================================
+//   KONFIGURASI
+// ==========================================
+const GITHUB_USER = "aisyahinara061-glitch";
+const GITHUB_REPO = "amprem-keys";
+const GITHUB_FILE = "keys.json";
+const API_KEY = "PREMIUM03DYWHDHWHFHAJXSJFHAJS";
+const BASE_URL = "https://hyerls.my.id/api/amprem.php";
+const DAILY_LIMIT = 10;
+
+// ==========================================
+//   STATE
+// ==========================================
+let currentKey = "";
+let currentInfo = {};
+let userLog = [];
+let isProcessing = false;
+</script>
+<script>
+// ==========================================
+//   HAPTIC
+// ==========================================
+function haptic(ms) {
+    try { if (navigator.vibrate) navigator.vibrate(ms || 10); } catch(e) {}
+}
+
+// ==========================================
+//   TOAST
+// ==========================================
+function toast(msg, type) {
+    type = type || "ok";
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.className = "toast show " + type;
+    setTimeout(function() { t.className = "toast " + type; }, 2200);
+}
+
+// ==========================================
+//   TIME
+// ==========================================
+function getTime() {
+    const d = new Date();
+    const h = String(d.getHours()).padStart(2, "0");
+    const m = String(d.getMinutes()).padStart(2, "0");
+    return h + ":" + m;
+}
+
+function getDateStr() {
+    const d = new Date();
+    const days = ["Minggu","Senin","Selasa","Rabu","Kamis","Jumat","Sabtu"];
+    const months = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
+    return days[d.getDay()] + ", " + d.getDate() + " " + months[d.getMonth()] + " " + d.getFullYear();
+}
+
+// ==========================================
+//   CHAT BUBBLE
+// ==========================================
+function addBubble(who, content, opts) {
+    opts = opts || {};
+    const chat = document.getElementById("chatArea");
+    const bubble = document.createElement("div");
+    bubble.className = "msg " + who;
+
+    let html = content;
+    if (opts.read) {
+        html += '<div class="msg-time">' + getTime() + ' <span class="read-mark">✓✓</span></div>';
+    } else {
+        html += '<div class="msg-time">' + getTime() + '</div>';
+    }
+    bubble.innerHTML = html;
+
+    chat.appendChild(bubble);
+    chat.scrollTop = chat.scrollHeight;
+    return bubble;
+}
+
+function addBotMsg(content, opts) { return addBubble("bot", content, opts); }
+function addUserMsg(content) { return addBubble("user", content, { read: true }); }
+
+function addDateDivider() {
+    const chat = document.getElementById("chatArea");
+    const div = document.createElement("div");
+    div.className = "date-divider";
+    div.textContent = getDateStr();
+    chat.appendChild(div);
+}
+
+function showTyping() {
+    const chat = document.getElementById("chatArea");
+    const typing = document.createElement("div");
+    typing.className = "msg bot";
+    typing.id = "typingIndicator";
+    typing.innerHTML = '<div class="typing"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>';
+    chat.appendChild(typing);
+    chat.scrollTop = chat.scrollHeight;
+}
+
+function hideTyping() {
+    const t = document.getElementById("typingIndicator");
+    if (t) t.remove();
+}
+
+function delay(ms) {
+    return new Promise(function(r) { setTimeout(r, ms); });
+}
+
+// ==========================================
+//   CONSOLE BUBBLE
+// ==========================================
+function addConsoleBubble(title) {
+    const chat = document.getElementById("chatArea");
+    const bubble = document.createElement("div");
+    bubble.className = "msg bot";
+
+    const uid = "console_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
+    bubble.id = uid;
+
+    bubble.innerHTML =
+        '<div class="msg-title">' + title + '</div>' +
+        '<div class="console" id="' + uid + '_log"></div>' +
+        '<div class="msg-time">' + getTime() + '</div>';
+
+    chat.appendChild(bubble);
+    chat.scrollTop = chat.scrollHeight;
+    return uid;
+}
+
+function consoleLog(bubbleId, text, cls) {
+    const el = document.getElementById(bubbleId + "_log");
+    if (!el) return;
+    const line = document.createElement("span");
+    line.className = "c-line " + (cls || "");
+    line.textContent = text;
+    el.appendChild(line);
+    const chat = document.getElementById("chatArea");
+    chat.scrollTop = chat.scrollHeight;
+}
+
+function consoleSep(bubbleId) {
+    const el = document.getElementById(bubbleId + "_log");
+    if (!el) return;
+    const sep = document.createElement("span");
+    sep.className = "c-sep";
+    el.appendChild(sep);
+}
+
+// ==========================================
+//   HELPER
+// ==========================================
+function escapeHtml(s) {
+    return String(s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function normalizeKey(k) {
+    if (!k) return "";
+    k = k.normalize("NFKC");
+    k = k.replace(/[\u200b\u200c\u200d\ufeff\u00a0]/g, "");
+    k = k.toUpperCase().replace(/\s/g, "");
+    return k.replace(/[^A-Z0-9\-]/g, "");
+}
+</script>
+<script>
+// ==========================================
+//   API REQUEST — dengan Console Log
+// ==========================================
+async function apiRequest(bubbleId, action, params) {
+    const startTime = Date.now();
+
+    let url = BASE_URL + "?key=" + API_KEY + "&action=" + action;
+    for (const k in params) {
+        url += "&" + k + "=" + encodeURIComponent(params[k]);
+    }
+
+    consoleLog(bubbleId, "$ GET /api/amprem.php", "c-req");
+    consoleLog(bubbleId, "  action  = " + action, "c-key");
+    for (const k in params) {
+        const val = String(params[k]).length > 40 ? String(params[k]).substring(0, 40) + "..." : params[k];
+        consoleLog(bubbleId, "  " + k.padEnd(7) + " = " + val, "c-key");
+    }
+    consoleLog(bubbleId, "", "c-info");
+    consoleLog(bubbleId, "→ Sending...", "c-info");
+
+    await delay(200);
+
+    try {
+        const r = await fetch(url);
+        const elapsed = Date.now() - startTime;
+        const rawText = await r.text();
+
+        const statusClass = r.status === 200 ? "c-ok" : "c-err";
+        consoleLog(bubbleId, "← " + r.status + " " + (r.statusText || "OK") + " (" + elapsed + "ms)", statusClass);
+
+        consoleSep(bubbleId);
+
+        let data = null;
+        try {
+            data = JSON.parse(rawText);
+            const pretty = JSON.stringify(data, null, 2);
+            const lines = pretty.split("\n");
+            for (let i = 0; i < lines.length; i++) {
+                consoleLog(bubbleId, lines[i], "c-ok");
+            }
+        } catch(e) {
+            consoleLog(bubbleId, "[non-JSON]", "c-warn");
+            consoleLog(bubbleId, rawText.substring(0, 400), "c-err");
+        }
+
+        return { ok: r.status === 200, status: r.status, data: data, raw: rawText, elapsed: elapsed };
+
+    } catch(e) {
+        const elapsed = Date.now() - startTime;
+        consoleLog(bubbleId, "✗ FAILED (" + elapsed + "ms)", "c-err");
+        consoleLog(bubbleId, e.message, "c-err");
+        consoleSep(bubbleId);
+        consoleLog(bubbleId, "💡 Kemungkinan:", "c-warn");
+        if (e.message.indexOf("Failed") !== -1) {
+            consoleLog(bubbleId, "   • CORS / internet bermasalah", "c-info");
+            consoleLog(bubbleId, "   • Coba buka di Kiwi Browser", "c-info");
+        } else {
+            consoleLog(bubbleId, "   • " + e.message, "c-info");
+        }
+        return { ok: false, error: e.message, elapsed: elapsed };
+    }
+}
+
+function isResponseOK(data) {
+    if (!data) return false;
+    const s = String(data.status || "").toLowerCase();
+    const su = String(data.success || "").toLowerCase();
+    if (su === "true" || su === "1") return true;
+    if (s === "true" || s === "success" || s === "ok" || s === "200") return true;
+    if (data.code === 200 || data.code === "200") return true;
+    if (data.data && (data.data.success === true || String(data.data.status).toLowerCase() === "success")) return true;
+    return false;
+}
+
+// ==========================================
+//   FETCH KEYS (GitHub)
+// ==========================================
+async function fetchKeys() {
+    try {
+        const apiUrl = "https://api.github.com/repos/" + GITHUB_USER + "/" + GITHUB_REPO + "/contents/" + GITHUB_FILE;
+        const r = await fetch(apiUrl + "?t=" + Date.now(), {
+            headers: { "Accept": "application/vnd.github+json" }
+        });
+        if (r.status === 200) {
+            const d = await r.json();
+            const content = decodeURIComponent(escape(atob(d.content)));
+            const data = JSON.parse(content);
+            return data.keys || {};
+        }
+    } catch(e) { console.error("API err:", e); }
+
+    try {
+        const rawUrl = "https://raw.githubusercontent.com/" + GITHUB_USER + "/" + GITHUB_REPO + "/main/" + GITHUB_FILE;
+        const r = await fetch(rawUrl + "?t=" + Date.now() + "&r=" + Math.random());
+        if (r.status === 200) {
+            const d = await r.json();
+            return d.keys || {};
+        }
+    } catch(e) { console.error("Raw err:", e); }
+
+    return null;
+}
+
+function cekValid(info) {
+    const exp = info.expired || "9999-12-31";
+    if (exp === "9999-12-31") return true;
+    const today = new Date().toISOString().split("T")[0];
+    return exp >= today;
+}
+
+function hitungSisa(exp) {
+    if (exp === "9999-12-31") return "Permanent";
+    const today = new Date();
+    const d = new Date(exp);
+    const diff = Math.floor((d - today) / 86400000);
+    if (diff < 0) return "Expired";
+    if (diff === 0) return "Hari ini";
+    return diff + " hari";
+}
+
+// ==========================================
+//   LOG
+// ==========================================
+function saveLog() {
+    try { localStorage.setItem("amprem_user_log", JSON.stringify(userLog)); } catch(e) {}
+}
+
+function loadLog() {
+    try {
+        const d = localStorage.getItem("amprem_user_log");
+        if (d) userLog = JSON.parse(d);
+    } catch(e) { userLog = []; }
+}
+
+function addLog(aksi, tipe) {
+    tipe = tipe || "info";
+    const ts = new Date().toISOString().replace("T", " ").substring(0, 19);
+    userLog.push({ t: ts, a: aksi, k: tipe });
+    if (userLog.length > 40) userLog = userLog.slice(-40);
+    saveLog();
+}
+
+// ==========================================
+//   LIMIT
+// ==========================================
+function getLimitData() {
+    try {
+        const d = JSON.parse(localStorage.getItem("amprem_user_limit") || "{}");
+        const today = new Date().toISOString().split("T")[0];
+        if (d.tanggal !== today) return { tanggal: today, terpakai: 0 };
+        return d;
+    } catch(e) {
+        return { tanggal: new Date().toISOString().split("T")[0], terpakai: 0 };
+    }
+}
+
+function saveLimitData(d) {
+    try { localStorage.setItem("amprem_user_limit", JSON.stringify(d)); } catch(e) {}
+}
+
+function cekLimit() { return getLimitData().terpakai < DAILY_LIMIT; }
+
+function pakaiLimit() {
+    const d = getLimitData();
+    d.terpakai++;
+    saveLimitData(d);
+}
+
+function sisaLimit() { return Math.max(0, DAILY_LIMIT - getLimitData().terpakai); }
+
+function showLimitModal() {
+    document.getElementById("limitModal").classList.add("show");
+    haptic(30);
+}
+
+function closeLimitModal() {
+    document.getElementById("limitModal").classList.remove("show");
+    haptic();
+}
+
+// ==========================================
+//   PREMIUM POPUP
+// ==========================================
+function showPremium() {
+    document.getElementById("premiumPopup").classList.add("show");
+    haptic(50);
+}
+
+function closePremium() {
+    document.getElementById("premiumPopup").classList.remove("show");
+    haptic();
+}
+
+// ==========================================
+//   QUICK BAR
+// ==========================================
+function updateQuickBar() {
+    const bar = document.getElementById("quickBar");
+    if (!currentKey) {
+        bar.innerHTML =
+            '<button class="quick-btn" onclick="quickCmd(\'/start\')">🚀 Mulai</button>' +
+            '<button class="quick-btn" onclick="quickCmd(\'/help\')">❓ Bantuan</button>';
+    } else {
+        bar.innerHTML =
+            '<button class="quick-btn" onclick="quickCmd(\'/menu\')">🏠 Menu</button>' +
+            '<button class="quick-btn" onclick="quickCmd(\'/reg\')">📝 Register</button>' +
+            '<button class="quick-btn" onclick="quickCmd(\'/login\')">🔑 Login</button>' +
+            '<button class="quick-btn" onclick="quickCmd(\'/status\')">📊 Status</button>' +
+            '<button class="quick-btn" onclick="quickCmd(\'/riwayat\')">📜 Riwayat</button>' +
+            '<button class="quick-btn" onclick="quickCmd(\'/refresh\')">🔄 Refresh</button>';
+    }
+}
+
+function quickCmd(cmd) {
+    haptic();
+    const input = document.getElementById("inputField");
+    if (cmd === "/reg" || cmd === "/login") {
+        input.value = cmd + " ";
+        input.focus();
+    } else {
+        input.value = cmd;
+        sendMessage();
+    }
+}
+</script>
+<script>
+// ==========================================
+//   COMMAND HANDLER
+// ==========================================
+async function handleCommand(text) {
+    const parts = text.trim().split(/\s+/);
+    const cmd = parts[0].toLowerCase().replace(/^\//, "");
+    const args = parts.slice(1).join(" ");
+
+    if (cmd === "start" || cmd === "menu") {
+        if (!currentKey) return showWelcome();
+        return showMenu();
+    }
+
+    if (cmd === "help" || cmd === "bantuan") return showHelp();
+
+    if (cmd === "status") {
+        if (!currentKey) return showNotLogin();
+        return showStatus();
+    }
+
+    if (cmd === "refresh") {
+        if (!currentKey) return showNotLogin();
+        return doRefresh();
+    }
+
+    if (cmd === "riwayat" || cmd === "history") {
+        if (!currentKey) return showNotLogin();
+        return showRiwayat();
+    }
+
+    if (cmd === "logout") {
+        if (!currentKey) return showNotLogin();
+        return doLogoutConfirm();
+    }
+
+    if (cmd === "claim" || cmd === "redeem" || cmd === "hadiah") {
+        if (!args) {
+            return addBotMsg(
+                '<div class="msg-title">🎁 Claim Code</div>' +
+                'Format: <code>/claim KODE</code><br><br>' +
+                'Contoh:<br>' +
+                '<code>/claim PROMO2026</code>'
+            );
+        }
+        return doClaimCode(args);
+    }
+
+    if (cmd === "reg" || cmd === "register") {
+        if (!currentKey) return showNotLogin();
+        if (!args) {
+            return addBotMsg(
+                '<div class="msg-title">📝 Register Akun</div>' +
+                'Format: <code>/reg email@kamu.com</code><br><br>' +
+                'Contoh:<br><code>/reg budi@gmail.com</code>'
+            );
+        }
+        return doRegister(args);
+    }
+
+    if (cmd === "login") {
+        if (!currentKey) return showNotLogin();
+        const lp = args.split(/\s+/);
+        if (lp.length < 2) {
+            return addBotMsg(
+                '<div class="msg-title">🔑 Login Akun</div>' +
+                'Format: <code>/login email link</code><br><br>' +
+                'Contoh:<br><code>/login budi@gmail.com https://example.com</code>'
+            );
+        }
+        const email = lp[0];
+        const link = lp.slice(1).join(" ");
+        return doLoginAkun(email, link);
+    }
+
+    addBotMsg('❓ Perintah tidak dikenal.<br><br>Ketik <code>/help</code> untuk bantuan.');
+}
+
+// ==========================================
+//   WELCOME
+// ==========================================
+function showWelcome() {
+    return addBotMsg(
+        '<div class="gb-hero">' +
+            '<div class="gb-hero-emoji">👋</div>' +
+            '<div class="gb-hero-title">Selamat Datang</div>' +
+            '<div class="gb-hero-sub">AmPrem Premium Bot</div>' +
+        '</div>' +
+        '<div class="gb-banner-line"></div>' +
+        '<div class="gb-section">Cara Pakai</div>' +
+        '<div class="gb-menu"><span class="gb-menu-cmd">Langkah 1</span><span class="gb-menu-desc">Beli key dari admin</span></div>' +
+        '<div class="gb-menu"><span class="gb-menu-cmd">Langkah 2</span><span class="gb-menu-desc">Kirim key ke chat ini</span></div>' +
+        '<div class="gb-menu"><span class="gb-menu-cmd">Langkah 3</span><span class="gb-menu-desc">Verifikasi otomatis</span></div>' +
+        '<div class="gb-menu"><span class="gb-menu-cmd">Langkah 4</span><span class="gb-menu-desc">Akses register & login</span></div>' +
+        '<div class="gb-banner-line"></div>' +
+        '<div class="gb-box">' +
+            '<div class="gb-row"><span class="gb-label">💡 Kirim key</span><span class="gb-value cyan">AMP-XXXXXXXXXXXXXXXX</span></div>' +
+            '<div class="gb-row"><span class="gb-label">📖 Bantuan</span><span class="gb-value">/help</span></div>' +
+        '</div>',
+        { read: false }
+    );
+}
+
+// ==========================================
+//   MENU
+// ==========================================
+function showMenu() {
+    const used = getLimitData().terpakai;
+    const sisa = Math.max(0, DAILY_LIMIT - used);
+    const pct = Math.min(100, Math.round((used / DAILY_LIMIT) * 100));
+    const filled = Math.round(pct / 10);
+    const bar = '█'.repeat(filled) + '░'.repeat(10 - filled);
+
+    let html = '';
+    html += '<div class="gb-banner">';
+    html += '<div class="gb-banner-title">🏠 MENU UTAMA</div>';
+    html += '</div>';
+    html += '<div class="gb-banner-line"></div>';
+
+    html += '<div class="gb-box">';
+    html += '<div class="gb-row"><span class="gb-label">🔑 Key</span><span class="gb-value cyan">' + currentKey.substring(0, 20) + (currentKey.length > 20 ? "..." : "") + '</span></div>';
+    html += '<div class="gb-row"><span class="gb-label">⏳ Durasi</span><span class="gb-value yellow">' + (currentInfo.durasi || "-").toUpperCase() + '</span></div>';
+    html += '<div class="gb-row"><span class="gb-label">📅 Expired</span><span class="gb-value purple">' + (currentInfo.expired || "-") + '</span></div>';
+    html += '<div class="gb-row"><span class="gb-label">⏰ Sisa</span><span class="gb-value green">' + hitungSisa(currentInfo.expired || "9999-12-31") + '</span></div>';
+    html += '</div>';
+
+    html += '<div class="gb-section">Limit Hari Ini</div>';
+    html += '<div class="gb-box">';
+    html += '<div class="gb-row"><span class="gb-label">' + bar + '</span><span class="gb-value pink">' + used + ' / ' + DAILY_LIMIT + '</span></div>';
+    html += '<div class="gb-row"><span class="gb-label">Sisa aksi</span><span class="gb-value green">' + sisa + ' kali</span></div>';
+    html += '</div>';
+
+    html += '<div class="gb-section">Perintah</div>';
+    html += '<div class="gb-menu"><span class="gb-menu-cmd">/claim KODE</span><span class="gb-menu-desc">Klaim hadiah</span></div>';
+    html += '<div class="gb-menu"><span class="gb-menu-cmd">/reg email</span><span class="gb-menu-desc">Register akun baru</span></div>';
+    html += '<div class="gb-menu"><span class="gb-menu-cmd">/login email link</span><span class="gb-menu-desc">Login akun</span></div>';
+    html += '<div class="gb-menu"><span class="gb-menu-cmd">/status</span><span class="gb-menu-desc">Cek status akun</span></div>';
+    html += '<div class="gb-menu"><span class="gb-menu-cmd">/riwayat</span><span class="gb-menu-desc">Lihat riwayat</span></div>';
+    html += '<div class="gb-menu"><span class="gb-menu-cmd">/refresh</span><span class="gb-menu-desc">Update data</span></div>';
+    html += '<div class="gb-menu"><span class="gb-menu-cmd">/logout</span><span class="gb-menu-desc">Keluar</span></div>';
+
+    return addBotMsg(html, { read: false });
+}
+
+// ==========================================
+//   HELP
+// ==========================================
+function showHelp() {
+    let html = '';
+    html += '<div class="gb-banner">';
+    html += '<div class="gb-banner-title">📖 BANTUAN</div>';
+    html += '</div>';
+    html += '<div class="gb-banner-line"></div>';
+
+    html += '<div class="gb-section">Perintah Utama</div>';
+    html += '<div class="gb-menu"><span class="gb-menu-cmd">/start</span><span class="gb-menu-desc">Mulai bot</span></div>';
+    html += '<div class="gb-menu"><span class="gb-menu-cmd">/menu</span><span class="gb-menu-desc">Menu utama</span></div>';
+    html += '<div class="gb-menu"><span class="gb-menu-cmd">/help</span><span class="gb-menu-desc">Tampilkan bantuan</span></div>';
+
+    html += '<div class="gb-section">Akun</div>';
+    html += '<div class="gb-menu"><span class="gb-menu-cmd">/claim KODE</span><span class="gb-menu-desc">Klaim hadiah kode</span></div>';
+    html += '<div class="gb-menu"><span class="gb-menu-cmd">/reg email</span><span class="gb-menu-desc">Register akun baru</span></div>';
+    html += '<div class="gb-menu"><span class="gb-menu-cmd">/login email link</span><span class="gb-menu-desc">Login akun</span></div>';
+    html += '<div class="gb-menu"><span class="gb-menu-cmd">/status</span><span class="gb-menu-desc">Cek status</span></div>';
+    html += '<div class="gb-menu"><span class="gb-menu-cmd">/riwayat</span><span class="gb-menu-desc">Riwayat aktivitas</span></div>';
+    html += '<div class="gb-menu"><span class="gb-menu-cmd">/refresh</span><span class="gb-menu-desc">Refresh data</span></div>';
+    html += '<div class="gb-menu"><span class="gb-menu-cmd">/logout</span><span class="gb-menu-desc">Keluar</span></div>';
+
+    html += '<div class="gb-section">Info</div>';
+    html += '<div class="gb-box">';
+    html += '<div class="gb-row"><span class="gb-label">💡 Cara cepat</span><span class="gb-value">Kirim key langsung</span></div>';
+    html += '<div class="gb-row"><span class="gb-label">🔒 Limit</span><span class="gb-value green">10 aksi/hari</span></div>';
+    html += '</div>';
+
+    return addBotMsg(html, { read: false });
+}
+
+function showNotLogin() {
+    return addBotMsg(
+        '❌ Kamu belum login.<br><br>' +
+        'Kirim key kamu dulu:<br>' +
+        '<code>AMP-XXXXXXXXXXXXXXXX</code>'
+    );
+}
+
+// ==========================================
+//   STATUS
+// ==========================================
+async function showStatus() {
+    showTyping();
+    await delay(600);
+
+    const daftar = await fetchKeys();
+    hideTyping();
+
+    if (!daftar || !daftar[currentKey]) {
+        addBotMsg('<div class="msg-err">⚠️ Key kamu sudah tidak aktif.</div>');
+        setTimeout(doLogout, 2000);
+        return;
+    }
+
+    const info = daftar[currentKey];
+    const used = getLimitData().terpakai;
+    const pct = Math.min(100, (used / DAILY_LIMIT) * 100);
+
+    let html = '<div class="msg-title">📊 Status Akun</div>';
+    html += '<div class="msg-row"><span class="msg-row-label">🔑 Key</span><span class="msg-row-value">' + currentKey + '</span></div>';
+    html += '<div class="msg-row"><span class="msg-row-label">⏳ Durasi</span><span class="msg-row-value">' + (info.durasi || "-") + '</span></div>';
+    html += '<div class="msg-row"><span class="msg-row-label">📅 Expired</span><span class="msg-row-value">' + (info.expired || "-") + '</span></div>';
+    html += '<div class="msg-row"><span class="msg-row-label">⏰ Sisa</span><span class="msg-row-value">' + hitungSisa(info.expired || "9999-12-31") + '</span></div>';
+    html += '<div class="msg-row"><span class="msg-row-label">✅ Status</span><span class="msg-row-value">AKTIF</span></div>';
+    html += '<div class="msg-divider"></div>';
+    html += '<div class="msg-row"><span class="msg-row-label">📊 Limit</span><span class="msg-row-value">' + used + ' / ' + DAILY_LIMIT + '</span></div>';
+    html += '<div class="msg-progress"><div class="msg-progress-fill" style="width:' + pct + '%"></div></div>';
+
+    addBotMsg(html, { read: false });
+}
+
+// ==========================================
+//   REFRESH
+// ==========================================
+async function doRefresh() {
+    showTyping();
+    await delay(500);
+
+    const daftar = await fetchKeys();
+    hideTyping();
+
+    if (!daftar || !daftar[currentKey]) {
+        addBotMsg('<div class="msg-err">⚠️ Key sudah tidak aktif.</div>');
+        setTimeout(doLogout, 2000);
+        return;
+    }
+
+    currentInfo = daftar[currentKey];
+    sessionStorage.setItem("amprem_user_info", JSON.stringify(currentInfo));
+    addBotMsg('<div class="msg-ok">✅ Data berhasil diperbarui!</div>');
+}
+
+// ==========================================
+//   RIWAYAT
+// ==========================================
+function showRiwayat() {
+    loadLog();
+    if (userLog.length === 0) {
+        return addBotMsg('📭 Belum ada aktivitas.');
+    }
+
+    let html = '<div class="msg-title">📜 Riwayat Aktivitas</div>';
+    const last = userLog.slice(-10).reverse();
+    for (let i = 0; i < last.length; i++) {
+        const l = last[i];
+        const icon = l.k === "ok" ? "✅" : l.k === "err" ? "❌" : "▸";
+        html += '<div class="msg-row"><span class="msg-row-label">' + icon + ' ' + l.t.substring(11, 16) + '</span><span class="msg-row-value">' + escapeHtml(l.a.substring(0, 28)) + '</span></div>';
+    }
+    return addBotMsg(html, { read: false });
+}
+</script>
+<script>
+// ==========================================
+//   CLAIM CODE
+// ==========================================
+async function doClaimCode(code) {
+    code = (code || "").trim().toUpperCase();
+
+    if (!code) {
+        return addBotMsg(
+            '<div class="msg-title">🎁 Claim Code</div>' +
+            'Format: <code>/claim KODE</code><br><br>' +
+            'Contoh:<br>' +
+            '<code>/claim PROMO2026</code>'
+        );
+    }
+
+    if (code.length < 3) {
+        return addBotMsg('<div class="msg-err">❌ Kode terlalu pendek</div>');
+    }
+
+    const bid = addConsoleBubble("🎁 Claim — " + code);
+
+    // Fetch data GitHub
+    const daftar = await fetchKeys();
+    if (!daftar) {
+        consoleSep(bid);
+        consoleLog(bid, "✗ Gagal ambil data", "c-err");
+        return addBotMsg('<div class="msg-err">⚠️ Gagal konek server. Coba lagi.</div>');
+    }
+
+    // Ambil claims dari keys.json (bukan cuma keys)
+    let claims = null;
+    try {
+        const apiUrl = "https://api.github.com/repos/aisyahinara061-glitch/amprem-keys/contents/keys.json";
+        const r = await fetch(apiUrl + "?t=" + Date.now(), {
+            headers: { "Accept": "application/vnd.github+json" }
+        });
+        if (r.status === 200) {
+            const d = await r.json();
+            const raw = decodeURIComponent(escape(atob(d.content)));
+            const data = JSON.parse(raw);
+            claims = data.claims || {};
+        }
+    } catch(e) {
+        console.error(e);
+    }
+
+    if (!claims) {
+        consoleSep(bid);
+        consoleLog(bid, "✗ Gagal baca claims", "c-err");
+        return addBotMsg('<div class="msg-err">⚠️ Gagal baca data. Coba lagi.</div>');
+    }
+
+    const claim = claims[code];
+
+    if (!claim) {
+        consoleSep(bid);
+        consoleLog(bid, "✗ Kode tidak terdaftar", "c-err");
+        return addBotMsg(
+            '<div class="msg-err">❌ Kode tidak valid</div>' +
+            '<div class="gb-box"><div class="gb-row"><span class="gb-label">💡 Cek lagi penulisan kode</span></div></div>'
+        );
+    }
+
+    // Cek kuota
+    const used = claim.used_count || 0;
+    const max = claim.max_use || 1;
+
+    consoleLog(bid, "→ Code: " + code, "c-key");
+    consoleLog(bid, "→ Reward: " + (claim.reward || "-"), "c-key");
+    consoleLog(bid, "→ Kuota: " + used + "/" + max, "c-key");
+
+    if (used >= max) {
+        consoleSep(bid);
+        consoleLog(bid, "✗ Kuota habis", "c-err");
+        return addBotMsg(
+            '<div class="msg-err">❌ Kode sudah habis dipakai</div>' +
+            '<div class="gb-box"><div class="gb-row"><span class="gb-label">Kuota</span><span class="gb-value pink">' + used + '/' + max + '</span></div></div>'
+        );
+    }
+
+    // Generate key sesuai reward
+    const reward = claim.reward || "harian";
+    const newKey = generateRewardKey(reward);
+    const today = new Date();
+    let exp = "9999-12-31";
+    let durasi = "permanent";
+
+    if (reward === "harian") {
+        exp = new Date(today.getTime() + 86400000).toISOString().split("T")[0];
+        durasi = "harian";
+    } else if (reward === "mingguan") {
+        exp = new Date(today.getTime() + 7 * 86400000).toISOString().split("T")[0];
+        durasi = "mingguan";
+    } else if (reward === "bulanan") {
+        exp = new Date(today.getTime() + 30 * 86400000).toISOString().split("T")[0];
+        durasi = "bulanan";
+    } else {
+        durasi = "permanent";
+    }
+
+    consoleLog(bid, "→ Key: " + newKey, "c-ok");
+    consoleLog(bid, "→ Expired: " + exp, "c-ok");
+
+    // Update data
+    const apiUrl = "https://api.github.com/repos/aisyahinara061-glitch/amprem-keys/contents/keys.json";
+    const fr = await fetch(apiUrl + "?t=" + Date.now(), {
+        headers: { "Accept": "application/vnd.github+json" }
+    });
+    if (fr.status !== 200) {
+        consoleSep(bid);
+        consoleLog(bid, "✗ Gagal fetch sha", "c-err");
+        return addBotMsg('<div class="msg-err">⚠️ Gagal update. Coba lagi.</div>');
+    }
+    const fd = await fr.json();
+    const sha = fd.sha;
+    const raw = decodeURIComponent(escape(atob(fd.content)));
+    const full = JSON.parse(raw);
+
+    if (!full.claims) full.claims = {};
+    if (!full.keys) full.keys = {};
+
+    // Update claims counter
+    full.claims[code].used_count = used + 1;
+
+    // Tambah key baru
+    full.keys[newKey] = {
+        dibuat: new Date().toISOString().replace("T", " ").substring(0, 19),
+        expired: exp,
+        durasi: durasi,
+        dibuat_oleh: "Claim: " + code
+    };
+
+    consoleLog(bid, "→ Push ke GitHub...", "c-info");
+
+    // PUSH pakai token admin (GITHUB_TOKEN di user panel)
+    const USER_TOKEN = "ISI_TOKEN_GITHUB_KAMU_DISINI"; // <- ISI TOKEN!
+
+    if (!USER_TOKEN || USER_TOKEN === "ISI_TOKEN_GITHUB_KAMU_DISINI") {
+        consoleSep(bid);
+        consoleLog(bid, "✗ Token GitHub belum diisi", "c-err");
+        return addBotMsg(
+            '<div class="msg-err">⚠️ Fitur claim belum dikonfigurasi</div>' +
+            '<div class="gb-box"><div class="gb-row"><span class="gb-label">Info</span><span class="gb-value">Hubungi admin</span></div></div>'
+        );
+    }
+
+    try {
+        const content64 = btoa(unescape(encodeURIComponent(JSON.stringify(full, null, 2))));
+        const putBody = {
+            message: "claim " + code + " → " + newKey,
+            content: content64,
+            branch: "main",
+            sha: sha
+        };
+
+        const pr = await fetch(apiUrl, {
+            method: "PUT",
+            headers: {
+                "Authorization": "token " + USER_TOKEN,
+                "Accept": "application/vnd.github+json",
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(putBody)
+        });
+
+        if (pr.status === 200 || pr.status === 201) {
+            consoleSep(bid);
+            consoleLog(bid, "✓ SUCCESS", "c-ok");
+
+            haptic(50);
+
+            // Tampilkan hadiah
+            return addBotMsg(
+                '<div class="gb-banner">' +
+                    '<div class="gb-banner-title">🎁 HADIAH KAMU!</div>' +
+                '</div>' +
+                '<div class="gb-banner-line"></div>' +
+                '<div class="gb-box">' +
+                    '<div class="gb-row"><span class="gb-label">🎁 Kode</span><span class="gb-value cyan">' + escapeHtml(code) + '</span></div>' +
+                    '<div class="gb-row"><span class="gb-label">🔑 Key</span><span class="gb-value green">' + newKey + '</span></div>' +
+                    '<div class="gb-row"><span class="gb-label">⏳ Durasi</span><span class="gb-value yellow">' + durasi.toUpperCase() + '</span></div>' +
+                    '<div class="gb-row"><span class="gb-label">📅 Expired</span><span class="gb-value purple">' + exp + '</span></div>' +
+                '</div>' +
+                '<div class="gb-section">Selanjutnya</div>' +
+                '<div class="gb-box">' +
+                    '<div class="gb-row"><span class="gb-label">💡 Cara pakai</span><span class="gb-value">Kirim key di atas untuk login</span></div>' +
+                    '<div class="gb-row"><span class="gb-label">📋 Copy key</span><span class="gb-value cyan">' + newKey + '</span></div>' +
+                '</div>'
+            );
+        } else {
+            const err = await pr.json();
+            consoleSep(bid);
+            consoleLog(bid, "✗ Push gagal: " + (err.message || pr.status), "c-err");
+            return addBotMsg('<div class="msg-err">⚠️ Gagal klaim: ' + escapeHtml(err.message || "Unknown") + '</div>');
+        }
+    } catch(e) {
+        consoleSep(bid);
+        consoleLog(bid, "✗ Error: " + e.message, "c-err");
+        return addBotMsg('<div class="msg-err">⚠️ Error: ' + escapeHtml(e.message) + '</div>');
+    }
+}
+
+function generateRewardKey(reward) {
+    const CS = "ACDEFGHJKMNPQRTUVWXY34679";
+    let r = "";
+    for (let i = 0; i < 16; i++) r += CS[Math.floor(Math.random() * CS.length)];
+    const prefix = reward === "permanent" ? "VIP-" : "GIFT-";
+    return "AMP-" + prefix + r.substring(0, 12);
+}
+
+// ==========================================
+//   REGISTER — dengan Console
+// ==========================================
+async function doRegister(email) {
+    if (!cekLimit()) return showLimitModal();
+
+    if (email.indexOf("@") === -1 || email.indexOf(".") === -1) {
+        return addBotMsg('<div class="msg-err">❌ Format email tidak valid.<br>Contoh: <code>/reg budi@gmail.com</code></div>');
+    }
+
+    const bid = addConsoleBubble("📝 Register — " + escapeHtml(email));
+
+    const result = await apiRequest(bid, "register", { email: email });
+
+    await delay(500);
+
+    if (result.ok && isResponseOK(result.data)) {
+        pakaiLimit();
+        addLog("Register - " + email, "ok");
+        haptic(30);
+
+        consoleSep(bid);
+        consoleLog(bid, "✓ SUCCESS", "c-ok");
+
+        let html = '<div class="msg-title">✅ Register Berhasil</div>';
+        html += '<div class="msg-row"><span class="msg-row-label">📧 Email</span><span class="msg-row-value">' + escapeHtml(email) + '</span></div>';
+        html += '<div class="msg-divider"></div>';
+        html += '<div class="msg-row"><span class="msg-row-label">📊 Sisa Limit</span><span class="msg-row-value">' + sisaLimit() + ' aksi</span></div>';
+        addBotMsg(html, { read: false });
+
+    } else if (result.ok && result.data) {
+        addLog("Register gagal - " + email, "err");
+        consoleSep(bid);
+        consoleLog(bid, "✗ FAILED", "c-err");
+        const msg = result.data.message || result.data.error || "Response tidak success";
+
+        addBotMsg(
+            '<div class="msg-err">❌ Register gagal</div>' +
+            '<div class="msg-row" style="margin-top:8px"><span class="msg-row-label">Alasan</span><span class="msg-row-value">' + escapeHtml(msg) + '</span></div>'
+        );
+
+    } else {
+        addLog("Register error", "err");
+        consoleSep(bid);
+        consoleLog(bid, "✗ ERROR", "c-err");
+        addBotMsg('<div class="msg-err">⚠️ Gagal terhubung ke server</div>');
+    }
+}
+
+// ==========================================
+//   LOGIN AKUN — dengan Console
+// ==========================================
+async function doLoginAkun(email, link) {
+    if (!cekLimit()) return showLimitModal();
+
+    if (email.indexOf("@") === -1) {
+        return addBotMsg('<div class="msg-err">❌ Format email tidak valid.</div>');
+    }
+
+    const bid = addConsoleBubble("🔑 Login Akun — " + escapeHtml(email));
+
+    const result = await apiRequest(bid, "login", { email: email, link: link });
+
+    await delay(500);
+
+    if (result.ok && isResponseOK(result.data)) {
+        pakaiLimit();
+        addLog("Login akun - " + email, "ok");
+        haptic(30);
+
+        consoleSep(bid);
+        consoleLog(bid, "✓ SUCCESS", "c-ok");
+
+        let html = '<div class="msg-title">✅ Login Berhasil</div>';
+        html += '<div class="msg-row"><span class="msg-row-label">📧 Email</span><span class="msg-row-value">' + escapeHtml(email) + '</span></div>';
+        html += '<div class="msg-row"><span class="msg-row-label">🔗 Link</span><span class="msg-row-value">' + escapeHtml(link.substring(0, 25)) + (link.length > 25 ? "..." : "") + '</span></div>';
+        html += '<div class="msg-divider"></div>';
+        html += '<div class="msg-row"><span class="msg-row-label">📊 Sisa Limit</span><span class="msg-row-value">' + sisaLimit() + ' aksi</span></div>';
+        addBotMsg(html, { read: false });
+
+    } else if (result.ok && result.data) {
+        addLog("Login akun gagal - " + email, "err");
+        consoleSep(bid);
+        consoleLog(bid, "✗ FAILED", "c-err");
+        const msg = result.data.message || result.data.error || "Response tidak success";
+
+        addBotMsg(
+            '<div class="msg-err">❌ Login gagal</div>' +
+            '<div class="msg-row" style="margin-top:8px"><span class="msg-row-label">Alasan</span><span class="msg-row-value">' + escapeHtml(msg) + '</span></div>'
+        );
+
+    } else {
+        addLog("Login akun error", "err");
+        consoleSep(bid);
+        consoleLog(bid, "✗ ERROR", "c-err");
+        addBotMsg('<div class="msg-err">⚠️ Gagal terhubung ke server</div>');
+    }
+}
+
+// ==========================================
+//   LOGOUT
+// ==========================================
+function doLogoutConfirm() {
+    addBotMsg(
+        '🚪 Yakin ingin logout?<br><br>' +
+        '<button class="msg-btn" onclick="doLogout()">Ya, Logout</button>' +
+        '<button class="msg-btn" onclick="cancelLogout()">Batal</button>'
+    );
+}
+
+function cancelLogout() {
+    addBotMsg('❌ Logout dibatalkan.');
+}
+
+function doLogout() {
+    addLog("LOGOUT", "warn");
+    haptic(30);
+    sessionStorage.removeItem("amprem_user_key");
+    sessionStorage.removeItem("amprem_user_info");
+    setTimeout(function() { location.reload(); }, 500);
+}
+
+// ==========================================
+//   KEY INPUT
+// ==========================================
+async function handleKeyInput(key) {
+    const normalized = normalizeKey(key);
+
+    if (!normalized || normalized.length < 10) {
+        return addBotMsg(
+            '<div class="msg-err">❌ Format key tidak valid.<br><br>' +
+            'Contoh: <code>AMP-XXXXXXXXXXXXXXXX</code></div>'
+        );
+    }
+
+    showTyping();
+    await delay(1000);
+
+    const daftar = await fetchKeys();
+    hideTyping();
+
+    if (!daftar) {
+        return addBotMsg('<div class="msg-err">⚠️ Gagal konek server.<br>Coba lagi nanti.</div>');
+    }
+
+    if (!daftar[normalized]) {
+        addLog("LOGIN GAGAL - key tidak terdaftar", "err");
+        return addBotMsg('<div class="msg-err">❌ Key tidak terdaftar.<br><br>Hubungi admin untuk beli key.</div>');
+    }
+
+    const info = daftar[normalized];
+    if (!cekValid(info)) {
+        addLog("LOGIN EXPIRED", "err");
+        return addBotMsg('<div class="msg-err">❌ Key sudah EXPIRED.<br><br>Beli key baru dari admin.</div>');
+    }
+
+    currentKey = normalized;
+    currentInfo = info;
+    sessionStorage.setItem("amprem_user_key", normalized);
+    sessionStorage.setItem("amprem_user_info", JSON.stringify(info));
+    addLog("LOGIN SUKSES", "ok");
+    haptic(50);
+
+    document.getElementById("logoutBtn").style.display = "flex";
+    updateQuickBar();
+
+    showPremium();
+
+    await delay(300);
+
+    let html = '<div class="msg-title">✅ Key Valid!</div>';
+    html += '<div class="msg-row"><span class="msg-row-label">🔑 Key</span><span class="msg-row-value">' + normalized + '</span></div>';
+    html += '<div class="msg-row"><span class="msg-row-label">⏳ Durasi</span><span class="msg-row-value">' + (info.durasi || "-") + '</span></div>';
+    html += '<div class="msg-row"><span class="msg-row-label">📅 Expired</span><span class="msg-row-value">' + (info.expired || "-") + '</span></div>';
+    html += '<div class="msg-row"><span class="msg-row-label">⏰ Sisa</span><span class="msg-row-value">' + hitungSisa(info.expired || "9999-12-31") + '</span></div>';
+    html += '<div class="msg-divider"></div>';
+    html += 'Ketik <code>/menu</code> untuk menu lengkap 🎉';
+    addBotMsg(html, { read: false });
+}
+
+// ==========================================
+//   SEND MESSAGE
+// ==========================================
+function sendMessage() {
+    if (isProcessing) return;
+
+    const input = document.getElementById("inputField");
+    const text = input.value.trim();
+    if (!text) return;
+
+    haptic();
+    addUserMsg(text);
+    input.value = "";
+
+    isProcessing = true;
+
+    setTimeout(async function() {
+        try {
+            if (text.startsWith("/")) {
+                await handleCommand(text);
+            } else if (text.toUpperCase().startsWith("AMP-") || (!currentKey && text.length >= 10)) {
+                await handleKeyInput(text);
+            } else if (!currentKey) {
+                addBotMsg(
+                    '💡 Kirim key kamu untuk mulai:<br>' +
+                    '<code>AMP-XXXXXXXXXXXXXXXX</code><br><br>' +
+                    'Atau ketik <code>/start</code>'
+                );
+            } else {
+                addBotMsg(
+                    '💡 Ketik <code>/menu</code> untuk menu,<br>' +
+                    'atau <code>/help</code> untuk bantuan.'
+                );
+            }
+        } catch(e) {
+            console.error(e);
+            hideTyping();
+            addBotMsg('<div class="msg-err">⚠️ Error: ' + e.message + '</div>');
+        }
+        isProcessing = false;
+    }, 300);
+}
+
+// ==========================================
+//   EVENT LISTENERS
+// ==========================================
+document.getElementById("inputField").addEventListener("keypress", function(e) {
+    if (e.key === "Enter") {
+        e.preventDefault();
+        sendMessage();
+    }
+});
+
+document.getElementById("premiumPopup").addEventListener("click", function(e) {
+    if (e.target.id === "premiumPopup") closePremium();
+});
+
+// ==========================================
+//   INIT
+// ==========================================
+
+// ==========================================
+//   CHECK MAINTENANCE
+// ==========================================
+async function checkMaintenance() {
+    const DEBUG = false;  // set true kalau mau liat detail di overlay
+
+    function setDebug(txt) {
+        if (!DEBUG) return;
+        var dbg = document.getElementById("maintDebug");
+        if (dbg) dbg.textContent = txt;
+    }
+
+    function showOverlay(m) {
+        var ov = document.getElementById("maintOverlay");
+        if (ov) ov.classList.add("show");
+
+        var msgEl = document.getElementById("maintMsg");
+        if (msgEl) msgEl.textContent = m.pesan || "Server sedang diperbaiki";
+
+        var etaEl = document.getElementById("maintEta");
+        if (etaEl) etaEl.textContent = m.eta || "Belum ditentukan";
+
+        var upEl = document.getElementById("maintUpdate");
+        if (upEl && m.diaktifkan) {
+            try {
+                var d = new Date(m.diaktifkan);
+                upEl.textContent = d.toLocaleString("id-ID");
+            } catch(e) { upEl.textContent = "-"; }
+        }
+    }
+
+    function hideOverlay() {
+        var ov = document.getElementById("maintOverlay");
+        if (ov) ov.classList.remove("show");
+    }
+
+    // ====== COBA 1: GitHub API (paling fresh) ======
+    setDebug("Coba API...");
+    try {
+        var apiUrl = "https://api.github.com/repos/aisyahinara061-glitch/amprem-keys/contents/keys.json";
+        var r = await fetch(apiUrl + "?t=" + Date.now(), {
+            headers: { "Accept": "application/vnd.github+json" },
+            cache: "no-store"
+        });
+        setDebug("API status: " + r.status);
+
+        if (r.status === 200) {
+            var d = await r.json();
+            var content64 = decodeURIComponent(escape(atob(d.content)));
+            var data = JSON.parse(content64);
+            var m = data.maintenance || {};
+            setDebug("API OK - aktif: " + m.aktif);
+
+            if (m.aktif === true) {
+                showOverlay(m);
+                return true;
+            } else {
+                hideOverlay();
+                return false;
+            }
+        }
+    } catch(e) {
+        setDebug("API error: " + e.message);
+        console.log("API error:", e);
+    }
+
+    // ====== COBA 2: Raw URL dengan cache-bust ganda ======
+    setDebug("Coba Raw URL...");
+    try {
+        var rawUrl = "https://raw.githubusercontent.com/aisyahinara061-glitch/amprem-keys/main/keys.json";
+        var r2 = await fetch(rawUrl + "?nocache=" + Date.now() + "&r=" + Math.random(), {
+            cache: "no-store"
+        });
+        setDebug("Raw status: " + r2.status);
+
+        if (r2.status === 200) {
+            var data2 = await r2.json();
+            var m2 = data2.maintenance || {};
+            setDebug("Raw OK - aktif: " + m2.aktif);
+
+            if (m2.aktif === true) {
+                showOverlay(m2);
+                return true;
+            } else {
+                hideOverlay();
+                return false;
+            }
+        }
+    } catch(e) {
+        setDebug("Raw error: " + e.message);
+        console.log("Raw error:", e);
+    }
+
+    // ====== COBA 3: jsDelivr CDN (alternatif) ======
+    setDebug("Coba jsDelivr...");
+    try {
+        var cdnUrl = "https://cdn.jsdelivr.net/gh/aisyahinara061-glitch/amprem-keys@main/keys.json";
+        var r3 = await fetch(cdnUrl + "?t=" + Date.now(), { cache: "no-store" });
+        setDebug("CDN status: " + r3.status);
+
+        if (r3.status === 200) {
+            var data3 = await r3.json();
+            var m3 = data3.maintenance || {};
+            setDebug("CDN OK - aktif: " + m3.aktif);
+
+            if (m3.aktif === true) {
+                showOverlay(m3);
+                return true;
+            } else {
+                hideOverlay();
+                return false;
+            }
+        }
+    } catch(e) {
+        setDebug("CDN error: " + e.message);
+        console.log("CDN error:", e);
+    }
+
+    // ====== Semua gagal → JANGAN block user, sembunyikan overlay ======
+    setDebug("Semua sumber gagal - hide overlay");
+    hideOverlay();
+    return false;
+}
+
+(async function init() {
+    // === CHECK MAINTENANCE DULU ===
+    var isMaint = await checkMaintenance();
+    if (isMaint) return;
+
+
+    setTimeout(function() {
+        document.getElementById("loadingScreen").classList.add("hide");
+    }, 1500);
+
+    loadLog();
+
+    const savedKey = sessionStorage.getItem("amprem_user_key");
+    const savedInfo = sessionStorage.getItem("amprem_user_info");
+
+    if (savedKey && savedInfo) {
+        try { currentInfo = JSON.parse(savedInfo); } catch(e) { currentInfo = {}; }
+
+        const daftar = await fetchKeys();
+        if (daftar && daftar[savedKey] && cekValid(daftar[savedKey])) {
+            currentKey = savedKey;
+            currentInfo = daftar[savedKey];
+            document.getElementById("logoutBtn").style.display = "flex";
+
+            await delay(1700);
+            addDateDivider();
+            addBotMsg(
+                '<div class="msg-title">👋 Selamat datang kembali!</div>' +
+                'Key kamu masih aktif. Ketik <code>/menu</code> untuk mulai.',
+                { read: false }
+            );
+            updateQuickBar();
+            return;
+        } else {
+            sessionStorage.removeItem("amprem_user_key");
+            sessionStorage.removeItem("amprem_user_info");
+        }
+    }
+
+    await delay(1700);
+    addDateDivider();
+    showWelcome();
+    updateQuickBar();
+})();
+
+// ==========================================
+//   RETRY MAINTENANCE CHECK
+// ==========================================
+async function retryMaint() {
+    const btn = document.getElementById("maintRetryBtn");
+    if (btn) {
+        btn.textContent = "⏳ CEK...";
+        btn.disabled = true;
+    }
+
+    const isMaint = await checkMaintenance();
+
+    if (!isMaint) {
+        // Maintenance OFF → hilangin overlay & reload halaman biar balik normal
+        const ov = document.getElementById("maintOverlay");
+        if (ov) ov.classList.remove("show");
+        setTimeout(function() { location.reload(); }, 500);
+    } else {
+        if (btn) {
+            btn.textContent = "🔄 COBA LAGI";
+            btn.disabled = false;
+        }
+    }
+}
+
+
+</script>
+</body>
+</html>
